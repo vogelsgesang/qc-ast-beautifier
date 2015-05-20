@@ -3,15 +3,21 @@ import yaml
 from functools import cmp_to_key
 
 class HumanFriendlyAstDumper(yaml.SafeDumper):
-    human_readable_order = []
+    default_order = []
+    specialized_orders = {}
 
     def __init__(self, *args, **kwargs):
         super(HumanFriendlyAstDumper, self).__init__(*args, **kwargs)
         self.add_representer(dict, self.represent_dict)
-        self._sort_key = self._createKeyFunc(self.human_readable_order)
+        self._default_key_fun = self._createKeyFunc(self.default_order)
+        self._specialized_key_funs = {k: self._createKeyFunc(v) for k, v in self.specialized_orders.items()}
 
     def represent_dict(self, _, data):
-        items = sorted(data.items(), key=self._sort_key)
+        if 'node_type' in data and data['node_type'] in self._specialized_key_funs:
+            key_fun = self._specialized_key_funs[data['node_type']]
+        else:
+            key_fun = self._default_key_fun
+        items = sorted(data.items(), key=key_fun)
         return self.represent_mapping(u'tag:yaml.org,2002:map', items);
 
     def _createKeyFunc(self, order):
@@ -36,7 +42,9 @@ class HumanFriendlyAstDumper(yaml.SafeDumper):
 
 if __name__ == '__main__':
     import sys
-
-    HumanFriendlyAstDumper.human_readable_order = ['node_type', 'test', 'orelse', 'body']
+    HumanFriendlyAstDumper.specialized_orders = {
+            'if': ['node_type', 'test', 'orelse', 'body']
+            }
+    HumanFriendlyAstDumper.default_order = ['node_type']
     data = yaml.load(sys.stdin)
     print(yaml.dump(data, Dumper=HumanFriendlyAstDumper))

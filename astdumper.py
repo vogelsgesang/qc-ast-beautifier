@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 import yaml
+import inspect
 from functools import cmp_to_key
 
 class HumanFriendlyAstDumper(yaml.SafeDumper):
@@ -9,6 +10,7 @@ class HumanFriendlyAstDumper(yaml.SafeDumper):
     def __init__(self, *args, **kwargs):
         super(HumanFriendlyAstDumper, self).__init__(*args, **kwargs)
         self.add_representer(dict, self.represent_dict)
+        #materialize the key functions
         self._default_key_fun = self._createKeyFunc(self.default_order)
         self._specialized_key_funs = {k: self._createKeyFunc(v) for k, v in self.specialized_orders.items()}
 
@@ -42,9 +44,24 @@ class HumanFriendlyAstDumper(yaml.SafeDumper):
 
 if __name__ == '__main__':
     import sys
+
     HumanFriendlyAstDumper.specialized_orders = {
             'if': ['node_type', 'test', 'orelse', 'body']
             }
     HumanFriendlyAstDumper.default_order = ['node_type']
-    data = yaml.load(sys.stdin)
+
+    if len(sys.argv) == 1:
+        data = yaml.load(sys.stdin)
+    elif len(sys.argv) == 2:
+        instream = open(sys.argv[1], 'r')
+        data = yaml.load(instream)
+        instream.close()
+    else:
+        print(inspect.cleandoc("""
+        Usage: astdumper.py [infile]
+
+        If infile is not given, input will be read from stdin
+        """))
+        exit(1)
+
     print(yaml.dump(data, Dumper=HumanFriendlyAstDumper))

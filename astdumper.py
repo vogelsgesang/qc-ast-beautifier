@@ -45,9 +45,28 @@ class HumanFriendlyAstDumper(yaml.SafeDumper):
 if __name__ == '__main__':
     import sys
 
-    HumanFriendlyAstDumper.specialized_orders = {
-            'if': ['node_type', 'test', 'orelse', 'body']
-            }
+    HumanFriendlyAstDumper.specialized_orders = {k: ['node_type'] + v for k,v in {
+            'assign': ['targets', 'value'],
+            'name': ['id', 'ctx'],
+            'attribute': ['value', 'attr', 'ctx'],
+            'list': ['elts', 'ctx'],
+            'dict': ['keys', 'values'],
+            'listcomp': ['elt', 'generators'],
+            'comprehension': ['target', 'iter', 'ifs'],
+            'boolop': ['op', 'values'],
+            'binop': ['left', 'op', 'right'],
+            'compare': ['left', 'opes', 'comparators'],
+            'call': ['func', 'args', 'starargs', 'keywords', 'kwargs'],
+            'if': ['test', 'body', 'orelse'],
+            'for': ['target', 'iter', 'body', 'orelse'],
+            'while': ['test', 'body', 'orelse'],
+            'lambda': ['args', 'body'],
+            'functiondef': ['name', 'args', 'decorator_list', 'docstring', 'body'],
+            'classdef': ['name', 'bases', 'decorator_list', 'docstring', 'body'],
+            'import': ['names'],
+            'importfrom': ['module', 'level', 'names'],
+            'alias': ['name', 'asname']
+        }.items()}
     HumanFriendlyAstDumper.default_order = ['node_type']
 
     if len(sys.argv) == 1:

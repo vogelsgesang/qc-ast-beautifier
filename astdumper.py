@@ -45,6 +45,7 @@ class HumanFriendlyAstDumper(yaml.SafeDumper):
 if __name__ == '__main__':
     import sys
 
+    HumanFriendlyAstDumper.default_order = ['node_type'] #by default, 'node_type' should be always the first element
     HumanFriendlyAstDumper.specialized_orders = {k: ['node_type'] + v for k,v in {
             'assign': ['targets', 'value'],
             'name': ['id', 'ctx'],
@@ -67,7 +68,6 @@ if __name__ == '__main__':
             'importfrom': ['module', 'level', 'names'],
             'alias': ['name', 'asname']
         }.items()}
-    HumanFriendlyAstDumper.default_order = ['node_type']
 
     if len(sys.argv) == 1:
         data = yaml.load(sys.stdin)

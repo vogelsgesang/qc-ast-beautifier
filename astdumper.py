@@ -72,9 +72,8 @@ if __name__ == '__main__':
     if len(sys.argv) == 1:
         data = yaml.load(sys.stdin)
     elif len(sys.argv) == 2:
-        instream = open(sys.argv[1], 'r')
-        data = yaml.load(instream)
-        instream.close()
+        with open(sys.argv[1], 'r') as instream:
+            data = yaml.load(instream)
     else:
         print(inspect.cleandoc("""
         Usage: astdumper.py [infile]

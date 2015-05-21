@@ -4,8 +4,31 @@ import inspect
 from functools import cmp_to_key
 
 class HumanFriendlyAstDumper(yaml.SafeDumper):
-    default_order = []
-    specialized_orders = {}
+    default_order = ['node_type'] #by default, 'node_type' should be always the first element
+    specialized_orders = {k: ['node_type'] + v for k,v in {
+            'assign': ['targets', 'value'],
+            'name': ['id', 'ctx'],
+            'attribute': ['value', 'attr', 'ctx'],
+            'tuple': ['elts', 'ctx'],
+            'list': ['elts', 'ctx'],
+            'dict': ['keys', 'values'],
+            'listcomp': ['elt', 'generators'],
+            'dictcomp': ['key', 'value', 'generators'],
+            'comprehension': ['target', 'iter', 'ifs'],
+            'boolop': ['op', 'values'],
+            'binop': ['left', 'op', 'right'],
+            'compare': ['left', 'opes', 'comparators'],
+            'call': ['func', 'args', 'starargs', 'keywords', 'kwargs'],
+            'if': ['test', 'body', 'orelse'],
+            'for': ['target', 'iter', 'body', 'orelse'],
+            'while': ['test', 'body', 'orelse'],
+            'lambda': ['args', 'body'],
+            'functiondef': ['name', 'args', 'decorator_list', 'docstring', 'body'],
+            'classdef': ['name', 'bases', 'decorator_list', 'docstring', 'body'],
+            'import': ['names'],
+            'importfrom': ['module', 'level', 'names'],
+            'alias': ['name', 'asname']
+        }.items()}
 
     def __init__(self, *args, **kwargs):
         super(HumanFriendlyAstDumper, self).__init__(*args, **kwargs)
@@ -44,32 +67,6 @@ class HumanFriendlyAstDumper(yaml.SafeDumper):
 
 if __name__ == '__main__':
     import sys
-
-    HumanFriendlyAstDumper.default_order = ['node_type'] #by default, 'node_type' should be always the first element
-    HumanFriendlyAstDumper.specialized_orders = {k: ['node_type'] + v for k,v in {
-            'assign': ['targets', 'value'],
-            'name': ['id', 'ctx'],
-            'attribute': ['value', 'attr', 'ctx'],
-            'tuple': ['elts', 'ctx'],
-            'list': ['elts', 'ctx'],
-            'dict': ['keys', 'values'],
-            'listcomp': ['elt', 'generators'],
-            'dictcomp': ['key', 'value', 'generators'],
-            'comprehension': ['target', 'iter', 'ifs'],
-            'boolop': ['op', 'values'],
-            'binop': ['left', 'op', 'right'],
-            'compare': ['left', 'opes', 'comparators'],
-            'call': ['func', 'args', 'starargs', 'keywords', 'kwargs'],
-            'if': ['test', 'body', 'orelse'],
-            'for': ['target', 'iter', 'body', 'orelse'],
-            'while': ['test', 'body', 'orelse'],
-            'lambda': ['args', 'body'],
-            'functiondef': ['name', 'args', 'decorator_list', 'docstring', 'body'],
-            'classdef': ['name', 'bases', 'decorator_list', 'docstring', 'body'],
-            'import': ['names'],
-            'importfrom': ['module', 'level', 'names'],
-            'alias': ['name', 'asname']
-        }.items()}
 
     if len(sys.argv) == 1:
         data = yaml.load(sys.stdin)

@@ -34,8 +34,8 @@ class HumanFriendlyAstDumper(yaml.SafeDumper):
         super(HumanFriendlyAstDumper, self).__init__(*args, **kwargs)
         self.add_representer(dict, self.represent_dict)
         #materialize the key functions
-        self._default_key_fun = self._createKeyFunc(self.default_order)
-        self._specialized_key_funs = {k: self._createKeyFunc(v) for k, v in self.specialized_orders.items()}
+        self._default_key_fun = self._create_key_func(self.default_order)
+        self._specialized_key_funs = {k: self._create_key_func(v) for k, v in self.specialized_orders.items()}
 
     def represent_dict(self, _, data):
         if 'node_type' in data and data['node_type'] in self._specialized_key_funs:
@@ -45,14 +45,15 @@ class HumanFriendlyAstDumper(yaml.SafeDumper):
         items = sorted(data.items(), key=key_fun)
         return self.represent_mapping(u'tag:yaml.org,2002:map', items);
 
-    def _createKeyFunc(self, order):
+    @staticmethod
+    def _create_key_func(order):
         """
         returns a function which can be used by the builtin `sorted` as key function
 
         `order` must be an array listing the values in increasing order.
         The returned cmp functions uses the ordering specified by `order` whenever possible.
         """
-        def compareFunc(x,y):
+        def compare_func(x,y):
             x = x[0]
             y = y[0]
             if x in order and y in order:
@@ -63,7 +64,7 @@ class HumanFriendlyAstDumper(yaml.SafeDumper):
                 return 1
             else:
                 return  -1 if x < y else 1 if x > y else 0
-        return cmp_to_key(compareFunc)
+        return cmp_to_key(compare_func)
 
 if __name__ == '__main__':
     import sys

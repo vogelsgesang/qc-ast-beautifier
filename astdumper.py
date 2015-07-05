@@ -7,9 +7,11 @@ class HumanFriendlyAstDumper(yaml.SafeDumper):
     default_order = ['node_type'] #by default, 'node_type' should be always the first element
     specialized_orders = {k: ['node_type'] + v for k,v in {
             'assign': ['targets', 'value'],
+            'augassign': ['target', 'op', 'value'],
             'name': ['id', 'ctx'],
             'attribute': ['value', 'attr', 'ctx'],
             'tuple': ['elts', 'ctx'],
+            'set': ['elts'],
             'list': ['elts', 'ctx'],
             'dict': ['keys', 'values'],
             'listcomp': ['elt', 'generators'],
@@ -30,7 +32,10 @@ class HumanFriendlyAstDumper(yaml.SafeDumper):
             'classdef': ['name', 'bases', 'decorator_list', 'docstring', 'body'],
             'import': ['names'],
             'importfrom': ['module', 'level', 'names'],
-            'alias': ['name', 'asname']
+            'alias': ['name', 'asname'],
+            'tryexcept': ['body', 'handlers', 'orelse'],
+            'excepthandler': ['type', 'name', 'body'],
+            'with': ['context_expr', 'optional_vars', 'body'],
         }.items()}
 
     def __init__(self, *args, **kwargs):

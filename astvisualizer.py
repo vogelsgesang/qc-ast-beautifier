@@ -4,10 +4,10 @@ import inspect
 import graphviz as gv
 import subprocess
 
-def escape_dot_label(str):
-    return str.replace("\\", "\\\\").replace("|", "\\|")
-
-def draw_graph(data, *, label=None):
+class GraphRenderer:
+    """
+    this class is capable of rendering arbitrary data structures as a graph using graphviz
+    """
     graphattrs = {
         'labelloc': 't',
         'fontcolor': 'white',
@@ -24,45 +24,59 @@ def draw_graph(data, *, label=None):
         'color': 'white',
         'fontcolor': 'white',
     }
-    if label is not None:
-        graphattrs['label'] = label
 
-    graph = gv.Digraph(graph_attr = graphattrs, node_attr = nodeattrs, edge_attr = edgeattrs)
+    _graph = None
+    _rendered_nodes = None
 
-    rendered_nodes = set()
+    @staticmethod
+    def _escape_dot_label(str):
+        return str.replace("\\", "\\\\").replace("|", "\\|")
 
-    def render_node(node):
-        if id(node) in rendered_nodes:
+    def _render_node(self, node):
+        if id(node) in self._rendered_nodes:
             return
-        rendered_nodes.add(id(node))
+        self._rendered_nodes.add(id(node))
+        node_id = node_id
+        graph = self._graph
         if isinstance(node, dict):
-            graph.node(str(id(node)), label=node.get("node_type"))
+            graph.node(node_id, label=node.get("node_type"))
             for key, value in node.items():
                 if key == "node_type": continue
-                render_node(value)
-                graph.edge(str(id(node)), str(id(value)), label=key)
+                self._render_node(value)
+                graph.edge(node_id, str(id(value)), label=key)
         elif isinstance(node, list):
-            graph.node(str(id(node)), label="[list]")
+            graph.node(node_id, label="[list]")
             for idx, value in enumerate(node):
-                render_node(value)
-                graph.edge(str(id(node)), str(id(value)), label=str(idx))
-        elif isinstance(node, str):
-            graph.node(str(id(node)), label=node)
+                self._render_node(value)
+                graph.edge(node_id, str(id(value)), label=str(idx))
         else:
-            graph.node(str(id(node)), label=str(node))
+            graph.node(node_id, label=str(node))
 
-    render_node(data)
-    print(graph.source)
-    graph.format = "pdf"
-    graph.render("test")
-    subprocess.Popen(['xdg-open', "test.pdf"])
+    def render(self, data, *, label=None):
+        # create the graph
+        graphattrs = self.graphattrs.copy()
+        if label is not None:
+            graphattrs['label'] = label
+        graph = gv.Digraph(graph_attr = graphattrs, node_attr = self.nodeattrs, edge_attr = self.edgeattrs)
+
+        # recursively draw all the nodes and edges
+        self._graph = graph
+        self._rendered_nodes = set()
+        self._render_node(data)
+        self._graph = None
+        self._rendered_nodes = None
+
+        # display the graph
+        graph.format = "pdf"
+        graph.render("test")
+        subprocess.Popen(['xdg-open', "test.pdf"])
 
 if __name__ == '__main__':
     import sys
 
     if len(sys.argv) == 1:
         data = yaml.load(sys.stdin)
-        label = None
+        label = "<graph read from stdin>"
     elif len(sys.argv) == 2:
         with open(sys.argv[1], 'r') as instream:
             data = yaml.load(instream)
@@ -75,4 +89,5 @@ if __name__ == '__main__':
         """))
         exit(1)
 
-    draw_graph(data, label=label)
+    renderer = GraphRenderer()
+    renderer.render(data, label=label)
